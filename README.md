@@ -10,5 +10,5 @@ npx setup-translate5
 ## next
 
 - frontmatter concat on mdx
-- progress tracker bug fix
 - image paths handling on mdx rendering
+- standardize source-target data
