@@ -4,7 +4,7 @@ import { config } from '$translator/translator.config.js';
 import package_json from '$root/package.json';
 import { does_file_exist } from '../lib';
 
-const { exclude } = config;
+const { include } = config;
 
 export const ssr = false;
 
@@ -14,7 +14,7 @@ export async function load({ url }: { url: URL }) {
 	const { root_dir } = config;
 
 	try {
-		const content_directories = await get_content_directories(root_dir, exclude);
+		const content_directories = await get_content_directories(root_dir, include);
 
 		// await create_json(content_directories);
 		return {
@@ -38,25 +38,25 @@ export async function load({ url }: { url: URL }) {
 
 async function get_content_directories(
 	base_path: string,
-	excluded_dirs: string[] = []
+	included_dirs: string[] = []
 ): Promise<BaseData[]> {
 	try {
 		const files = await fs.readdir(base_path);
 
 		const content_directories = await Promise.all(
-			files.map(async (file) => {
+			files.map(async (file: string) => {
 				const relative_path = path.join(base_path, file);
 				const stats = await fs.stat(relative_path);
 				const isDirectory = stats.isDirectory();
-				const excludeIndex = excluded_dirs.indexOf(file);
-				return isDirectory && excludeIndex === -1 ? file : null;
+				const includeIndex = included_dirs.indexOf(file);
+				return isDirectory && includeIndex !== -1 ? file : null;
 			})
 		);
 
-		const directories = content_directories.filter((dir): dir is string => dir !== null);
+		const directories = content_directories.filter((dir: string): dir is string => dir !== null);
 
 		const language_directories = await Promise.all(
-			directories.map(async (dir) => {
+			directories.map(async (dir: string | null) => {
 				const content_path = path.join(base_path, dir);
 
 				const en_dirs = await read_files(path.join(content_path, 'en'));
@@ -67,7 +67,7 @@ async function get_content_directories(
 					dir_name: dir,
 					en_subdirs: en_dirs,
 					languages: lang_directories.filter(
-						(lang_dir) => lang_dir.length === 2 && lang_dir !== 'en'
+						(lang_dir: string) => lang_dir.length === 2 && lang_dir !== 'en'
 					)
 				};
 			})
@@ -86,8 +86,6 @@ async function read_files(contentPath: string, displayPath: string = ''): Promis
 		let files: EnFiles[] = [];
 
 		const does_t5_exist = await does_file_exist(config.root_dir + 't5.json');
-
-		console.log({ does_t5_exist });
 
 		if (!does_t5_exist) {
 			await fs.writeFile(config.root_dir + 't5.json', JSON.stringify([]), 'utf8');
