@@ -5,10 +5,6 @@
 	import { ModeWatcher } from 'mode-watcher';
 
 	import Navbar from './_components/navbar.svelte';
-
-	export let data;
-
-	console.log(data);
 </script>
 
 <svelte:head>
